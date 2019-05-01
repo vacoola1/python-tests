@@ -1,0 +1,3 @@
+import blocks
+
+blocks.run()
