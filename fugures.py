@@ -1,15 +1,23 @@
 import pprint
 
-screen = [[1, 2, 3, 4, 5, 6],
-          [1, 2, 3, 4, 5, 6],
-          [1, 2, 3, 4, 5, 6],
-          [1, 2, 3, 4, 5, 6],
-          [1, 2, 3, 4, 5, 6]]
+SCREEN = [[1, 1, 1, 4, 5, 6, 7],
+          [1, 2, 3, 4, 5, 6, 7],
+          [1, 2, 3, 4, 5, 6, 6],
+          [1, 1, 6, 1, 5, 6, 6],
+          [1, 2, 3, 1, 8, 8, 7],
+          [1, 2, 3, 4, 8, 8, 7]]
 
 
 WILD = 2
 
-payout = {
+PAYOUT_SINGLE = {
+    1: {
+        1: 0,
+        2: 20
+    }
+}
+
+PAYOUT = {
     1: {
         1: 0,
         2: 20
@@ -50,7 +58,7 @@ payout = {
 }
 
 
-def symbol_payout(symbol, count):
+def symbol_payout(symbol, count, payout):
     pay = 0
     if symbol in payout:
         for s_count, s_pay in payout[symbol].items():
@@ -59,13 +67,13 @@ def symbol_payout(symbol, count):
     return pay
 
 
-def find_symbols_positions():
+def find_symbols_positions(payout, screen, wild):
     symbols_positions = {}
     for symbol in payout:
         positions = []
         for x, row in enumerate(screen):
             for y, screen_symbol in enumerate(row):
-                if screen_symbol == symbol:
+                if screen_symbol == symbol or screen_symbol == wild:
                     positions.append({'x': x, 'y': y})
 
         if len(positions) > 0:
@@ -74,10 +82,9 @@ def find_symbols_positions():
     return symbols_positions
 
 
-def find_symbols_blocks():
-    raw_blocks = find_symbols_positions()
+def find_symbols_blocks(symbols_positions):
     blocks = {}
-    for symbol, positions in raw_blocks.items():
+    for symbol, positions in symbols_positions.items():
         blocks[symbol] = group(positions)
 
     return blocks
@@ -110,33 +117,27 @@ def group(positions):
     return blocks
 
 
-def stacked(position1, position2):
-    return (position1['x'] == (position2['x'] + 1) & position1['y'] == position2['y']) | \
-           ((position1['x'] + 1) == position2['x'] & position1['y'] == position2['y']) | \
-           (position1['x'] == position2['x'] & position1['y'] == (position2['y'] + 1)) | \
-           (position1['x'] == position2['x'] & (position1['y'] + 1) == position2['y'])
+def stacked(pos1, pos2):
+    return (pos1['x'] == pos2['x'] + 1 and pos1['y'] == pos2['y']) or \
+           (pos1['x'] + 1 == pos2['x'] and pos1['y'] == pos2['y']) or \
+           (pos1['x'] == pos2['x'] and pos1['y'] == pos2['y'] + 1) or \
+           (pos1['x'] == pos2['x'] and pos1['y'] + 1 == pos2['y'])
 
 
-def display_screen():
-    print(' *** screen ***')
+def display(title, screen):
+    print(' *** ' + title + ' ***')
     print()
     pprint.pprint(screen)
     print()
 
 
-def display_blocks(blocks):
-    print(' *** blocks ***')
-    print()
-    pprint.pprint(blocks)
-    print()
+def run():
+    positions = find_symbols_positions(PAYOUT, SCREEN, WILD)
+    blocks = find_symbols_blocks(positions)
+
+    display("screen", SCREEN)
+    display("positions", positions)
+    display("blocks", blocks)
 
 
-# 1 2 2 4 5 6
-# 1 2 3 4 5 6
-# 1 3 3 3 5 6
-# 1 2 3 4 5 6
-# 1 2 2 4 5 6
-
-
-display_screen()
-display_blocks(find_symbols_blocks())
+run()
