@@ -1,6 +1,11 @@
-screen1 = [[1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6]]
+import pprint
 
-screen = screen1
+screen = [[1, 2, 3, 4, 5, 6],
+          [1, 2, 3, 4, 5, 6],
+          [1, 2, 3, 4, 5, 6],
+          [1, 2, 3, 4, 5, 6],
+          [1, 2, 3, 4, 5, 6]]
+
 
 WILD = 2
 
@@ -54,42 +59,76 @@ def symbol_payout(symbol, count):
     return pay
 
 
-def display_screen():
-    for row in screen:
-        for symbol in row:
-            print(symbol, end='')
-            print(' ', end='')
-        print()
-
-
-def active_blocks():
-    raw_blocks = {}
+def find_symbols_positions():
+    symbols_positions = {}
     for symbol in payout:
         positions = []
-        for asix, row in enumerate(screen):
-            for asiy, sym in enumerate(row):
-                if sym == symbol:
-                    positions.append({'x': asix, 'y': asiy})
+        for x, row in enumerate(screen):
+            for y, screen_symbol in enumerate(row):
+                if screen_symbol == symbol:
+                    positions.append({'x': x, 'y': y})
+
         if len(positions) > 0:
-            raw_blocks[symbol] = positions
+            symbols_positions[symbol] = positions
 
+    return symbols_positions
+
+
+def find_symbols_blocks():
+    raw_blocks = find_symbols_positions()
+    blocks = {}
     for symbol, positions in raw_blocks.items():
-        blocks = []
-        positions_copy = list(positions)
+        blocks[symbol] = group(positions)
 
-        blocks.append([positions_copy[0]])
-        positions_copy.remove(positions_copy[0])
+    return blocks
 
-        has_positions = len(positions_copy) > 0
 
-        while has_positions:
-            for block in blocks:
-                for pos_in_block in list(block):
-                    for pos in list(positions_copy):
-                        if pos['x'] == pos_in_block['x'] | pos['y'] == pos_in_block['y']:
-                            block.append(pos)
-                            positions_copy.remove(pos)
-            has_positions = len(positions_copy) > 0
+def group(positions):
+    if len(positions) == 0:
+        return {}
+
+    positions_copy = list(positions)
+
+    blocks = []
+    while len(positions_copy) > 0:
+
+        new_block = [positions_copy[0]]
+        positions_copy.pop(0)
+
+        has_stack = True
+        while has_stack:
+            has_stack = False
+            for pos_in_block in list(new_block):
+                for pos in list(positions_copy):
+                    if stacked(pos_in_block, pos):
+                        new_block.append(pos)
+                        positions_copy.remove(pos)
+                        has_stack = True
+
+        blocks.append(new_block)
+
+    return blocks
+
+
+def stacked(position1, position2):
+    return (position1['x'] == (position2['x'] + 1) & position1['y'] == position2['y']) | \
+           ((position1['x'] + 1) == position2['x'] & position1['y'] == position2['y']) | \
+           (position1['x'] == position2['x'] & position1['y'] == (position2['y'] + 1)) | \
+           (position1['x'] == position2['x'] & (position1['y'] + 1) == position2['y'])
+
+
+def display_screen():
+    print(' *** screen ***')
+    print()
+    pprint.pprint(screen)
+    print()
+
+
+def display_blocks(blocks):
+    print(' *** blocks ***')
+    print()
+    pprint.pprint(blocks)
+    print()
 
 
 # 1 2 2 4 5 6
@@ -98,5 +137,6 @@ def active_blocks():
 # 1 2 3 4 5 6
 # 1 2 2 4 5 6
 
+
 display_screen()
-active_blocks()
+display_blocks(find_symbols_blocks())
